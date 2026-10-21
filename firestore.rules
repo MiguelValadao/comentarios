@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Publicações: qualquer usuário autenticado pode ler;
+    // apenas o autor pode criar (com o próprio UID), editar ou excluir.
+    match /publicacoes/{publicacaoId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.uidAutor == request.auth.uid;
+      allow update, delete: if request.auth != null
+        && resource.data.uidAutor == request.auth.uid;
+    }
+
+    // Comentários: qualquer usuário autenticado pode ler;
+    // qualquer usuário autenticado pode criar (sempre com o próprio UID);
+    // apenas o autor pode excluir o próprio comentário.
+    match /comentarios/{comentarioId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
+    }
+  }
+}
